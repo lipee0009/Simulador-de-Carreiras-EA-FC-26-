@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <base target="_self">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EA FC 26 Career Simulator</title>
+    <meta name="description" content="Simulador de carreira do EA FC 26 - Sorteie seu time, formação e desafio com banco de dados completo">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#00ff85",
+                        "primary-dark": "#00cc6a",
+                        "primary-light": "#33ff9d",
+                        background: "#0a0a0a",
+                        card: "#1a1a1a",
+                        "card-dark": "#252525",
+                        "card-light": "#2d2d2d",
+                        text: "#ffffff",
+                        "text-secondary": "#b0b0b0"
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        },
+                        glow: {
+                            '0%': { 'box-shadow': '0 0 5px #00ff85, 0 0 10px #00ff85, 0 0 15px #00ff85' },
+                            '100%': { 'box-shadow': '0 0 10px #00ff85, 0 0 20px #00ff85, 0 0 30px #00ff85' }
+                        }
+                    },
+                    boxShadow: {
+                        'neon': '0 0 20px rgba(0, 255, 133, 0.3)',
+                        'neon-strong': '0 0 30px rgba(0, 255, 133, 0.5)',
+                        'card': '0 20px 50px rgba(0, 0, 0, 0.8)',
+                        'inner-lg': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom CSS for additional polish */
+        .gradient-border {
+            position: relative;
+            background: linear-gradient(45deg, #00ff85, #00cc6a, #00ff85);
+            padding: 2px;
+            border-radius: 20px;
+        }
+        
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00ff85, #00cc6a, #00ff85);
+            border-radius: 22px;
+            z-index: -1;
+            opacity: 0.5;
+            filter: blur(10px);
+        }
+        
+        .text-gradient {
+            background: linear-gradient(90deg, #00ff85, #00cc6a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 255, 133, 0.2);
+        }
+        
+        .info-item {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .info-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 133, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .info-item:hover::before {
+            left: 100%;
+        }
+        
+        .button-shine {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .button-shine::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 20%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(30deg);
+            transition: all 0.5s ease;
+        }
+        
+        .button-shine:hover::after {
+            left: 120%;
+        }
+        
+        .difficulty-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .difficulty-easy {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        
+        .difficulty-medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        
+        .difficulty-hard {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .difficulty-extreme {
+            background: rgba(168, 85, 247, 0.2);
+            color: #a855f7;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-background font-inter text-text flex flex-col items-center justify-center p-4">
+    <!-- Background decorative elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/3 rounded-full blur-3xl"></div>
+        <div class="absolute top-3/4 left-1/3 w-48 h-48 bg-primary/2 rounded-full blur-3xl"></div>
+    </div>
+    
+    <!-- Main Card -->
+    <div class="relative z-10 w-full max-w-2xl">
+        <!-- Decorative top border -->
+        <div class="gradient-border mb-8 rounded-t-2xl">
+            <div class="bg-card rounded-t-2xl p-6">
+                <div class="flex items-center justify-center space-x-3 mb-2">
+                    <div class="w-3 h-3 rounded-full bg-primary animate-pulse"></div>
+                    <div class="w-3 h-3 rounded-full bg-primary animate-pulse" style="animation-delay: 0.2s"></div>
+                    <div class="w-3 h-3 rounded-full bg-primary animate-pulse" style="animation-delay: 0.4s"></div>
+                </div>
+                
+                <h1 class="text-2xl md:text-3xl font-bold text-center text-gradient tracking-wider animate-fade-in">
+                    EA FC 26 CAREER SIMULATOR
+                </h1>
+                
+                <p class="text-text-secondary text-sm text-center mt-2 animate-fade-in" style="animation-delay: 0.1s">
+                    Banco de dados completo com 50+ times, 20+ formações e 20+ desafios
+                </p>
+            </div>
+        </div>
+        
+        <!-- Main Content Card -->
+        <div class="bg-card rounded-2xl shadow-card card-hover overflow-hidden animate-slide-up">
+            <!-- Card Header -->
+            <div class="border-b border-card-dark/50 p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 rounded-full bg-primary"></div>
+                        <span class="text-text-secondary text-sm">STATUS: <span id="status" class="text-primary font-semibold">PRONTO</span></span>
+                    </div>
+                    <div class="text-text-secondary text-sm">
+                        <i class="fas fa-database mr-1"></i>
+                        <span id="database-stats">Carregando...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Info Display -->
+            <div id="app" class="p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Time Info -->
+                    <div class="info-item bg-card-dark rounded-xl p-5 border border-card-dark/50 transition-all duration-300 hover:border-primary/30">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-users text-primary text-sm"></i>
+                                <span class="text-primary text-xs font-bold uppercase tracking-wider">TIME</span>
+                            </div>
+                            <div class="text-text-secondary text-xs">
+                                <i class="fas fa-shield-alt mr-1"></i>
+                                CLUBE
+                            </div>
+                        </div>
+                        <div id="time" class="text-xl font-bold text-white transition-all duration-300 min-h-[28px] flex items-center">
+                            <span class="text-text-secondary">---</span>
+                        </div>
+                        <div class="mt-2 text-text-secondary text-sm">
+                            <i class="fas fa-map-marker-alt mr-1"></i>
+                            <span id="time-details" class="opacity-0">Selecione um time para ver detalhes</span>
+                        </div>
+                        <div class="mt-3">
+                            <span id="time-category" class="difficulty-badge opacity-0">Categoria</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Formação Info -->
+                    <div class="info-item bg-card-dark rounded-xl p-5 border border-card-dark/50 transition-all duration-300 hover:border-primary/30">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-chess-board text-primary text-sm"></i>
+                                <span class="text-primary text-xs font-bold uppercase tracking-wider">FORMAÇÃO</span>
+                            </div>
+                            <div class="text-text-secondary text-xs">
+                                <i class="fas fa-tactical mr-1"></i>
+                                TÁTICA
+                            </div>
+                        </div>
+                        <div id="formacao" class="text-xl font-bold text-white transition-all duration-300 min-h-[28px] flex items-center">
+                            <span class="text-text-secondary">---</span>
+                        </div>
+                        <div class="mt-2 text-text-secondary text-sm">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            <span id="formacao-details" class="opacity-0">Formação tática do seu time</span>
+                        </div>
+                        <div class="mt-3">
+                            <span id="formacao-type" class="difficulty-badge opacity-0">Tipo</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Desafio Info -->
+                    <div class="info-item bg-card-dark rounded-xl p-5 border border-dark/50 transition-all duration-300 hover:border-primary/30">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-trophy text-primary text-sm"></i>
+                                <span class="text-primary text-xs font-bold uppercase tracking-wider">DESAFIO</span>
+                            </div>
+                            <div class="text-text-secondary text-xs">
+                                <i class="fas fa-flag mr-1"></i>
+                                OBJETIVO
+                            </div>
+                        </div>
+                        <div id="desafio" class="text-xl font-bold text-white transition-all duration-300 min-h-[28px] flex items-center">
+                            <span class="text-text-secondary">---</span>
+                        </div>
+                        <div class="mt-2 text-text-secondary text-sm">
+                            <i class="fas fa-star mr-1"></i>
+                            <span id="desafio-details" class="opacity-0">Seu objetivo principal na carreira</span>
+                        </div>
+                        <div class="mt-3">
+                            <span id="desafio-difficulty" class="difficulty-badge opacity-0">Dificuldade</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stats Bar -->
+                <div class="mt-8 bg-card-dark/50 rounded-xl p-4">
+                    <div class="grid grid-cols-4 gap-4 text-center">
+                        <div>
+                            <div class="text-primary text-lg font-bold" id="total-sorteios">0</div>
+                            <div class="text-text-secondary text-xs">SORTEIOS</div>
+                        </div>
+                        <div>
+                            <div class="text-primary text-lg font-bold" id="tempo-jogo">00:00</div>
+                            <div class="text-text-secondary text-xs">TEMPO</div>
+                        </div>
+                        <div>
+                            <div class="text-primary text-lg font-bold" id="sucesso-rate">100%</div>
+                            <div class="text-text-secondary text-xs">SUCESSO</div>
+                        </div>
+                        <div>
+                            <div class="text-primary text-lg font-bold" id="total-times">50+</div>
+                            <div class="text-text-secondary text-xs">TIMES</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Button -->
+            <div class="p-6 pt-4">
+                <button 
+                    id="sortear-btn"
+                    onclick="sortear()"
+                    class="button-shine w-full bg-primary hover:bg-primary-dark text-background font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-neon-strong flex items-center justify-center space-x-2 group"
+                >
+                    <i class="fas fa-random group-hover:rotate-180 transition-transform duration-500"></i>
+                    <span id="button-text">SORTEAR CARREIRA</span>
+                </button>
+                
+                <!-- Secondary Actions -->
+                <div class="flex justify-between mt-4">
+                    <button 
+                        onclick="resetar()"
+                        class="text-text-secondary hover:text-white text-sm transition-colors duration-200 flex items-center space-x-1"
+                    >
+                        <i class="fas fa-redo"></i>
+                        <span>Resetar</span>
+                    </button>
+                    
+                    <button 
+                        onclick="copiarResultado()"
+                        class="text-text-secondary hover:text-white text-sm transition-colors duration-200 flex items-center space-x-1"
+                    >
+                        <i class="far fa-copy"></i>
+                        <span>Copiar</span>
+                    </button>
+                    
+                    <button 
+                        onclick="compartilhar()"
+                        class="text-text-secondary hover:text-white text-sm transition-colors duration-200 flex items-center space-x-1"
+                    >
+                        <i class="fas fa-share-alt"></i>
+                        <span>Compartilhar</span>
+                    </button>
+                    
+                    <button 
+                        onclick="mostrarDatabase()"
+                        class="text-text-secondary hover:text-white text-sm transition-colors duration-200 flex items-center space-x-1"
+                    >
+                        <i class="fas fa-database"></i>
+                        <span>Database</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="mt-8 text-center text-text-secondary text-sm">
+            <p class="flex items-center justify-center space-x-2">
+                <i class="fas fa-code"></i>
+                <span>Desenvolvido com</span>
+                <i class="fas fa-heart text-primary mx-1"></i>
+                <span>para a comunidade EA FC</span>
+            </p>
+            <p class="mt-2 text-xs">
+                <i class="fas fa-exclamation-circle mr-1"></i>
+                Este é um simulador não oficial. Dados são gerados aleatoriamente.
+            </p>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-card border-l-4 border-primary text-white px-6 py-4 rounded-r-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50 max-w-sm">
+        <div class="flex items-center">
+            <i id="toast-icon" class="fas fa-check-circle text-primary text-xl mr-3"></i>
+            <div>
+                <p id="toast-title" class="font-bold">Sucesso!</p>
+                <p id="toast-message" class="text-sm text-text-secondary">Operação concluída com sucesso.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Database Modal -->
+    <div id="database-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-card rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
+            <div class="p-6 border-b border-card-dark/50 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                    <i class="fas fa-database text-primary"></i>
+                    <span>Banco de Dados Completo</span>
+                </h2>
+                <button onclick="fecharModal()" class="text-text-secondary hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[60vh]">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Times Section -->
+                    <div>
+                        <h3 class="text-lg font-bold text-primary mb-4 flex items-center">
+                            <i class="fas fa-users mr-2"></i>
+                            Times (50+)
+                        </h3>
+                        <div class="space-y-2">
+                            <div class="bg-card-dark/50 p-3 rounded-lg">
+                                <h4 class="font-bold text-white mb-2 text-sm">GIGANTES EM CRISE / DESAFIO MÉDIO</h4>
+                                <ul class="text-text-secondary text-sm space-y-1">
+                                    <li>• Manchester United (Inglaterra)</li>
+                                    <li>• Chelsea (Inglaterra)</li>
+                                    <li>• AC Milan (Itália)</li>
+                                    <li>• Lyon (França)</li>
+                                    <li>• Ajax (Holanda)</li>
+                                </ul>
+                            </div>
+                            <div class="bg-card-dark/50 p-3 rounded-lg">
+                                <h4 class="font-bold text-white mb-2 text-sm">MÉDIO PORTE / SURPRESAS</h4>
+                                <ul class="text-text-secondary text-sm space-y-1">
+                                    <li>• Aston Villa (Inglaterra)</li>
+                                    <li>• Brighton (Inglaterra)</li>
+                                    <li>• Real Sociedad (Espanha)</li>
+                                    <li>• Girona (Espanha)</li>
+                                    <li>• Bayer Leverkusen (Alemanha)</li>
+                                    <li>• Stuttgart (Alemanha)</li>
+                                    <li>• Atalanta (Itália)</li>
+                                    <li>• Bologna (Itália)</li>
+                                    <li>• RB Leipzig (Alemanha)</li>
+                                    <li>• Benfica (Portugal)</li>
+                                    <li>• Porto (Portugal)</li>
+                                    <li>• Sporting CP (Portugal)</li>
+                                    <li>• Fenerbahçe (Turquia)</li>
+                                    <li>• Galatasaray (Turquia)</li>
+                                    <li>• PSV (Holanda)</li>
+                                </ul>
+                            </div>
+                            <div class="bg-card-dark/50 p-3 rounded-lg">
+                                <h4 class="font-bold text-white mb-2 text-sm">ROAD TO GLORY (DIVISÕES INFERIORES)</h4>
+                                <ul class="text-text-secondary text-sm space-y-1">
+                                    <li>• Sunderland (EFL Champ.)</li>
+                                    <li>• Leeds United (EFL Champ.)</li>
+                                    <li>• Málaga (Espanha 2)</li>
+                                    <li>• Deportivo La Coruña (Espanha 2)</li>
+                                    <li>• Parma (Itália)</li>
+                                    <li>• Palermo (Itália 2)</li>
+                                    <li>• Sampdoria (Itália 2)</li>
+                                    <li>• Schalke 04 (Alemanha 2)</li>
+                                    <li>• Hamburgo (Alemanha 2)</li>
+                                    <li>• Paris FC (França 2)</li>
+                                    <li>• Wrexham (EFL League One)</li>
+                                    <li>• Notts County (EFL League Two)</li>
+                                    <li>• Como 1907 (Itália)</li>
+                                </ul>
+                            </div>
+                            <div class="bg-card-dark/50 p-3 rounded-lg">
+                                <h4 class="font-bold text-white mb-2 text-sm">RESTO DO MUNDO / FORA DA EUROPA</h4>
+                                <ul class="text-text-secondary text-sm space-y-1">
+                                    <li>• Al-Hilal (Arábia)</li>
+                                    <li>• Al-Nassr (Arábia)</li>
+                                    <li>• Inter Miami (EUA)</li>
+                                    <li>• LA Galaxy (EUA)</li>
+                                    <li>• River Plate (Argentina)</li>
+                                    <li>• Boca Juniors (Argentina)</li>
+                                    <li>• Flamengo (Brasil)</li>
+                                    <li>• Palmeiras (Brasil)</li>
+                                </ul>
+                            </div>
+                            <div class="bg-card-dark/50 p-3 rounded-lg">
+                                <h4 class="font-bold text-white mb-2 text-sm">DESAFIO EXTREMO (TIMES MAIS FRACOS)</h4>
+                                <ul class="text-text-secondary text-sm space-y-1">
+                                    <li>• Luton Town (EFL Champ.)</li>
+                                    <li>• Darmstadt (Alemanha 2)</li>
+                                    <li>• Le Havre (França)</li>
+                                    <li>• Estrela Amarela (Sérvia)</li>
+                                    <li>• Dinamo Zagreb (Croácia)</li>
+                                    <li>• Sparta Praga (Rep. Tcheca)</li>
+                                    <li>• AEK Atenas (Grécia)</li>
+                                    <li>• Panathinaikos (Grécia)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Formações Section -->
+                    <div>
+                        <h3 class="text-lg font-bold text-primary mb-4 flex items-center">
+                            <i class="fas fa-chess-board mr-2"></i>
+                            Formações (20+)
+                        </h3>
+                        <div class="space-y-2">
+                            <div class="bg-card-dark/50 p-3 rounded-lg">
+                                <h4 class="font-bold text-white mb-2 text-sm">FORMAÇÕES 4-3-3</h4>
+                                <ul class="text-text-secondary text-sm space-y-1">
+                                    <li>• 4-3-3 (Contenção)</li>
+                                    <li>• 4-3-3 (Ataque)</li>
+                                    <li>• 4-3-3 (Falso 9)</li>
+                                    <li>• 4-3-3 (Plano)</li>
+                                </ul>
+                            </div>
+                            <div class="bg-card-dark/50 p-3 rounded-lg">
+                                <h4 class="font-bold text-white mb-2 text-sm">FORMAÇÕES 4-2-3-1</h4>
+                                <ul class="text-text-secondary text-sm space-y-1">
+                                    <li>• 4-2-3-1 (Aberto)</li>
+                                    <li>• 4-2-3-1 (Fechado)</li>
+                                </ul>
+                            </div>
+                            <div class="bg-card-dark/50 p-3 rounded-lg">
+                                <h4 class="font-bold text-white mb-2 text-sm">FORMAÇÕES 4-4-2</h4>
+                                <ul class="text-text-secondary text-sm space-y-1">
+                                    <li>• 4-4-2 (Clássico)</li>
+                                    <li>• 4-4-2 (Losango Estreito)</li>
+                                    <li>• 4-4-2 (Losango Aberto)</li>
+                                </ul>
+                            </div>
+                            <div class="bg-card-dark/50 p-3 rounded-lg">
+                                <h4 class="font-bold text-white mb-2 text-sm">OUTRAS FORMAÇÕES</h4>
+                                <ul class="text-text-secondary text-sm space-y-1">
+                                    <li>• 4-1-4-1</li>
+                                    <li>• 4-5-1</li>
+                                    <li>• 4-2-2-2</li>
+                                    <li>• 4-2-4</li>
+                                    <li>• 3-4-3 (Plano)</li>
+                                    <li>• 3-4-3 (Diamante)</li>
+                                    <li>• 3-5-2</li>
+                                    <li>• 3-4-1-2</li>
+                                    <li>• 3-4-2-1</li>
+                                    <li>• 3-1-4-2</li>
+                                    <li>• 5-2-1-2</li>
+                                    <li>• 5-2-3</li>
+                                    <li>• 5-3-2</li>
+                                    <li>• 5-4-1</li>
+                                    <li>• 3-2-2-3 (WM Clássica)</li>
+                                    <li>• 4-3-2-1 (Árvore de Natal)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Desafios Section -->
+                    <div>
+                        <h3 class="text-lg font-bold text-primary mb-4 flex items-center">
+                            <i class="fas fa-trophy mr-2"></i>
+                            Desafios (20+)
+                        </h3>
+                        <div class="space-y-2">
+                            <div class="bg-card-dark/50 p-3 rounded-lg">
+                                <h4 class="font-bold text-white mb-2 text-sm">DESAFIOS DE CONTRATAÇÃO</h4>
+                                <ul class="text-text-secondary text-sm space-y-1">
+                                    <li>• <strong>Apenas Base:</strong> Só pode contratar jogadores da rede de recrutamento juvenil</li>
+                                    <li>• <strong>Nacionalismo:</strong> Só jogadores da mesma nacionalidade do país do clube</li>
+                                    <li>• <strong>Moneyball:</strong> Venda se receber proposta 15% acima do valor de mercado</li>
+                                    <li>• <strong>Sem Orçamento:</strong> Orçamento de R$ 0, só trocas ou Agentes Livres</li>
+                                </ul>
+                            </div>
+                            <div class="bg-card-dark/50 p-3 rounded-lg">
+                                <h4 class="font-bold text-white mb-2 text-sm">DESAFIOS DE GESTÃO</h4>
+                                <ul class="text-text-secondary text-sm space-y-1">
+                                    <li>• <strong>Under 21:</strong> Venda jogador ao completar 22 anos</li>
+                                    <li>• <strong>Teto Salarial:</strong> Nenhum jogador pode ganhar mais de 40 mil/semana</li>
+                                    <li>• <strong>O Retorno:</strong> Pelo menos 3 jogadores com mais de 34 anos no time titular</li>
+                                    <li>• <strong>Estrela de Vidro:</strong> Se lesionar por mais de 1 mês, deve vender</li>
+                                </ul>
+                            </div>
+                            <div class="bg-card-dark/50 p-3 rounded-lg">
+                                <h4 class="font-bold text-white mb-2 text-sm">DESAFIOS DE ESTRATÉGIA</h4>
+                                <ul class="text-text-secondary text-sm space-y-1">
+                                    <li>• <strong>Clube de Vendas:</strong> Venda seu artilheiro todo final de temporada</li>
+                                    <li>• <strong>Sem Renovação:</strong> Proibido renovar contratos</li>
+                                    <li>• <strong>Língua Pátria:</strong> Só jogadores que falem o idioma oficial do país</li>
+                                    <li>• <strong>Brexit:</strong> (Inglaterra) Proibido contratar jogadores estrangeiros</li>
+                                </ul>
+                            </div>
+                            <div class="bg-card-dark/50 p-3 rounded-lg">
+                                <h4 class="font-bold text-white mb-2 text-sm">DESAFIOS DE RESTRIÇÃO</h4>
+                                <ul class="text-text-secondary text-sm space-y-1">
+                                    <li>• <strong>Limite de OVR:</strong> Nenhum jogador pode ter mais de 80 de overall</li>
+                                    <li>• <strong>Escritório Frugal:</strong> Apenas uma contratação por janela de transferência</li>
+                                    <li>• <strong>Troca de Comando:</strong> Mude de formação tática a cada 5 jogos</li>
+                                    <li>• <strong>Investidor Anjo:</strong> Só jogadores que custem menos de 5 milhões</li>
+                                </ul>
+                            </div>
+                            <div class="bg-card-dark/50 p-3 rounded-lg">
+                                <h4 class="font-bold text-white mb-2 text-sm">DESAFIOS DE IDENTIDADE</h4>
+                                <ul class="text-text-secondary text-sm space-y-1">
+                                    <li>• <strong>DNA do Clube:</strong> Metade do time titular deve ser de jogadores originais</li>
+                                    <li>• <strong>Sem Olheiros:</strong> Só contrate jogadores da 'Transfer List' do jogo</li>
+                                    <li>• <strong>Reconstrução Total:</strong> Coloque todos acima de 28 anos à venda no primeiro dia</li>
+                                    <li>• <strong>Aposta da Base:</strong> Pelo menos 2 jogadores da base em todos os jogos</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-card-dark/50 text-center">
+                <button onclick="fecharModal()" class="bg-primary hover:bg-primary-dark text-background font-bold py-2 px-6 rounded-lg transition-colors duration-200">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Define complete database
+        const times = [
+            // GIGANTES EM CRISE / DESAFIO MÉDIO
+            { "nome": "Manchester United (Inglaterra)", "categoria": "Gigante em Crise", "detalhes": "Clube histórico em reconstrução, pressão por títulos" },
+            { "nome": "Chelsea (Inglaterra)", "categoria": "Gigante em Crise", "detalhes": "Projeto ambicioso, necessidade de resultados rápidos" },
+            { "nome": "AC Milan (Itália)", "categoria": "Gigante em Crise", "detalhes": "Retorno à glória após anos de instabilidade" },
+            { "nome": "Lyon (França)", "categoria": "Gigante em Crise", "detalhes": "Dominante no passado, busca retorno ao topo francês" },
+            { "nome": "Ajax (Holanda)", "categoria": "Gigante em Crise", "detalhes": "Fábrica de talentos, pressão para desenvolver jovens" },
+            
+            // MÉDIO PORTE / SURPRESAS
+            { "nome": "Aston Villa (Inglaterra)", "categoria": "Médio Porte", "detalhes": "Clube histórico buscando estabilidade na Premier League" },
+            { "nome": "Brighton (Inglaterra)", "categoria": "Médio Porte", "detalhes": "Projeto bem estruturado com olheiros eficientes" },
+            { "nome": "Real Sociedad (Espanha)", "categoria": "Médio Porte", "detalhes": "Tradicional do País Basco, foco em cantera" },
+            { "nome": "Girona (Espanha)", "categoria": "Médio Porte", "detalhes": "Sensação recente, busca se estabelecer no topo" },
+            { "nome": "Bayer Leverkusen (Alemanha)", "categoria": "Médio Porte", "detalhes": "Eterno vice, busca quebrar a maldição" },
+            { "nome": "Stuttgart (Alemanha)", "categoria": "Médio Porte", "detalhes": "Clube tradicional em reconstrução" },
+            { "nome": "Atalanta (Itália)", "categoria": "Médio Porte", "detalhes": "Reveladora de talentos, jogo ofensivo característico" },
+            { "nome": "Bologna (Itália)", "categoria": "Médio Porte", "detalhes": "Clube histórico buscando retorno à elite" },
+            { "nome": "RB Leipzig (Alemanha)", "categoria": "Médio Porte", "detalhes": "Projeto moderno com foco em jovens talentos" },
+            { "nome": "Benfica (Portugal)", "categoria": "Médio Porte", "detalhes": "Maior de Portugal, pressão por títulos nacionais" },
+            { "nome": "Porto (Portugal)", "categoria": "Médio Porte", "detalhes": "Gigante português, tradição em competições europeias" },
+            { "nome": "Sporting CP (Portugal)", "categoria": "Médio Porte", "detalhes": "Tradicional lisboeta, foco na formação" },
+            { "nome": "Fenerbahçe (Turquia)", "categoria": "Médio Porte", "detalhes": "Gigante turco, torcida apaixonada e exigente" },
+            { "nome": "Galatasaray (Turquia)", "categoria": "Médio Porte", "detalhes": "Maior campeão turco, ambiente de alta pressão" },
+            { "nome": "PSV (Holanda)", "categoria": "Médio Porte", "detalhes": "Tradicional holandês, rival direto do Ajax" },
+            
+            // ROAD TO GLORY (DIVISÕES INFERIORES / TIMES PEQUENOS)
+            { "nome": "Sunderland (EFL Champ.)", "categoria": "Road to Glory", "detalhes": "Clube gigante na segunda divisão, busca retorno à Premier League" },
+            { "nome": "Leeds United (EFL Champ.)", "categoria": "Road to Glory", "detalhes": "Tradicional inglês, busca retorno aos tempos de glória" },
+            { "nome": "Málaga (Espanha 2)", "categoria": "Road to Glory", "detalhes": "Ex-time da Champions, hoje na segunda divisão espanhola" },
+            { "nome": "Deportivo La Coruña (Espanha 2)", "categoria": "Road to Glory", "detalhes": "Campeão espanhol em 2000, hoje nas divisões inferiores" },
+            { "nome": "Parma (Itália)", "categoria": "Road to Glory", "detalhes": "Ex-gigante italiano, busca retorno à Serie A" },
+            { "nome": "Palermo (Itália 2)", "categoria": "Road to Glory", "detalhes": "Clube histórico siciliano em reconstrução" },
+            { "nome": "Sampdoria (Itália 2)", "categoria": "Road to Glory", "detalhes": "Campeão italiano em 1991, hoje na segunda divisão" },
+            { "nome": "Schalke 04 (Alemanha 2)", "categoria": "Road to Glory", "detalhes": "Gigante alemão rebaixado, busca retorno à Bundesliga" },
+            { "nome": "Hamburgo (Alemanha 2)", "categoria": "Road to Glory", "detalhes": "Único time que nunca caiu (até 2018), hoje na segunda divisão" },
+            { "nome": "Paris FC (França 2)", "categoria": "Road to Glory", "detalhes": "Desafio de superar o PSG na mesma cidade" },
+            { "nome": "Wrexham (EFL League One)", "categoria": "Road to Glory", "detalhes": "Clube galês em ascensão com novos donos famosos" },
+            { "nome": "Notts County (EFL League Two)", "categoria": "Road to Glory", "detalhes": "Clube mais antigo do mundo, busca retorno às divisões superiores" },
+            { "nome": "Como 1907 (Itália)", "categoria": "Road to Glory", "detalhes": "Clube italiano em reconstrução com ambições" },
+            
+            // RESTO DO MUNDO / FORA DA EUROPA
+            { "nome": "Al-Hilal (Arábia)", "categoria": "Resto do Mundo", "detalhes": "Maior clube da Arábia Saudita, orçamento ilimitado" },
+            { "nome": "Al-Nassr (Arábia)", "categoria": "Resto do Mundo", "detalhes": "Clube saudita com grandes estrelas internacionais" },
+            { "nome": "Inter Miami (EUA)", "categoria": "Resto do Mundo", "detalhes": "Projeto ambicioso com Messi, busca dominar a MLS" },
+            { "nome": "LA Galaxy (EUA)", "categoria": "Resto do Mundo", "detalhes": "Maior campeão da MLS, tradição em contratar estrelas" },
+            { "nome": "River Plate (Argentina)", "categoria": "Resto do Mundo", "detalhes": "Gigante argentino, fábrica de talentos sul-americanos" },
+            { "nome": "Boca Juniors (Argentina)", "categoria": "Resto do Mundo", "detalhes": "Maior rival do River, torcida apaixonada" },
+            { "nome": "Flamengo (Brasil)", "categoria": "Resto do Mundo", "detalhes": "Maior clube do Brasil, torcida gigantesca" },
+            { "nome": "Palmeiras (Brasil)", "categoria": "Resto do Mundo", "detalhes": "Maior campeão brasileiro recente, estrutura de elite" },
+            
+            // DESAFIO EXTREMO (TIMES MAIS FRACOS)
+            { "nome": "Luton Town (EFL Champ.)", "categoria": "Desafio Extremo", "detalhes": "Time pequeno com orçamento limitado" },
+            { "nome": "Darmstadt (Alemanha 2)", "categoria": "Desafio Extremo", "detalhes": "Time alemão com poucos recursos" },
+            { "nome": "Le Havre (França)", "categoria": "Desafio Extremo", "detalhes": "Clube histórico francês com dificuldades financeiras" },
+            { "nome": "Estrela Amarela (Sérvia)", "categoria": "Desafio Extremo", "detalhes": "Gigante sérvio com limitações financeiras" },
+            { "nome": "Dinamo Zagreb (Croácia)", "categoria": "Desafio Extremo", "detalhes": "Dominante na Croácia, desafio europeu" },
+            { "nome": "Sparta Praga (Rep. Tcheca)", "categoria": "Desafio Extremo", "detalhes": "Tradicional tcheco, busca sucesso europeu" },
+            { "nome": "AEK Atenas (Grécia)", "categoria": "Desafio Extremo", "detalhes": "Clube grego histórico em reconstrução" },
+            { "nome": "Panathinaikos (Grécia)", "categoria": "Desafio Extremo", "detalhes": "Tradicional grego, busca retorno à glória" }
+        ];
+
+        const formacoes = [
+            // FORMAÇÕES 4-3-3
+            { "nome": "4-3-3 (Contenção)", "tipo": "Defensiva", "detalhes": "Três volantes, foco em contenção e transições rápidas" },
+            { "nome": "4-3-3 (Ataque)", "tipo": "Ofensiva", "detalhes": "Três meias ofensivos, pressão alta e posse de bola" },
+            { "nome": "4-3-3 (Falso 9)", "tipo": "Tática", "detalhes": "Centroavante recuado, meias infiltrando nas laterais" },
+            { "nome": "4-3-3 (Plano)", "tipo": "Equilibrada", "detalhes": "Meio-campo plano, laterais avançados, jogo pelas pontas" },
+            
+            // FORMAÇÕES 4-2-3-1
+            { "nome": "4-2-3-1 (Aberto)", "tipo": "Ofensiva", "detalhes": "Ponta abertos, número 10 criativo, laterais sobrepostos" },
+            { "nome": "4-2-3-1 (Fechado)", "tipo": "Defensiva", "detalhes": "Ponta fechados, compactação defensiva, contra-ataques" },
+            
+            // FORMAÇÕES 4-4-2
+            { "nome": "4-4-2 (Clássico)", "tipo": "Tradicional", "detalhes": "Dois centroavantes, laterais defensivos, meio-campo plano" },
+            { "nome": "4-4-2 (Losango Estreito)", "tipo": "Ofensiva", "detalhes": "Meio-campo em losango, número 10 criativo, laterais avançados" },
+            { "nome": "4-4-2 (Losango Aberto)", "tipo": "Equilibrada", "detalhes": "Losango mais aberto, pontas mais largos, jogo pelas laterais" },
+            
+            // OUTRAS FORMAÇÕES
+            { "nome": "4-1-4-1", "tipo": "Defensiva", "detalhes": "Volante único, compactação defensiva, transições rápidas" },
+            { "nome": "4-5-1", "tipo": "Defensiva", "detalhes": "Meio-campo lotado, contenção, bola longa para o atacante" },
+            { "nome": "4-2-2-2", "tipo": "Ofensiva", "detalhes": "Dois duplos, laterais avançados, jogo ofensivo" },
+            { "nome": "4-2-4", "tipo": "Ofensiva", "detalhes": "Quatro atacantes, pressão alta, jogo direto" },
+            { "nome": "3-4-3 (Plano)", "tipo": "Ofensiva", "detalhes": "Três zagueiros, laterais avançados, trio de ataque" },
+            { "nome": "3-4-3 (Diamante)", "tipo": "Ofensiva", "detalhes": "Meio-campo em diamante, número 10, laterais ofensivos" },
+            { "nome": "3-5-2", "tipo": "Equilibrada", "detalhes": "Três zagueiros, laterais ofensivos, dois centroavantes" },
+            { "nome": "3-4-1-2", "tipo": "Ofensiva", "detalhes": "Três zagueiros, número 10 criativo, dupla de ataque" },
+            { "nome": "3-4-2-1", "tipo": "Ofensiva", "detalhes": "Três zagueiros, dois meias ofensivos, centroavante único" },
+            { "nome": "3-1-4-2", "tipo": "Ofensiva", "detalhes": "Volante único, laterais muito ofensivos, dupla de ataque" },
+            { "nome": "5-2-1-2", "tipo": "Defensiva", "detalhes": "Cinco defensores, contenção, contra-ataques rápidos" },
+            { "nome": "5-2-3", "tipo": "Defensiva", "detalhes": "Cinco defensores, trio de ataque, jogo direto" },
+            { "nome": "5-3-2", "tipo": "Defensiva", "detalhes": "Cinco defensores, meio-campo compacto, dupla de ataque" },
+            { "nome": "5-4-1", "tipo": "Defensiva", "detalhes": "Linha de cinco, meio-campo de quatro, atacante solitário" },
+            { "nome": "3-2-2-3 (WM Clássica)", "tipo": "Tática", "detalhes": "Formação histórica WM, três defensores, dois volantes" },
+            { "nome": "4-3-2-1 (Árvore de Natal)", "tipo": "Ofensiva", "detalhes": "Formação em árvore de natal, três meias ofensivos" }
+        ];
+
+        const desafios = [
+            // DESAFIOS DE CONTRATAÇÃO
+            { 
+                "nome": "Apenas Base", 
+                "dificuldade": "Médio", 
+                "detalhes": "Só pode contratar jogadores da rede de recrutamento juvenil. Proibido comprar jogadores do mercado.",
+                "categoria": "Contratação"
+            },
+            { 
+                "nome": "Nacionalismo", 
+                "dificuldade": "Fácil", 
+                "detalhes": "Só jogadores da mesma nacionalidade do país do clube. Exceção para jogadores da base.",
+                "categoria": "Contratação"
+            },
+            { 
+                "nome": "Moneyball", 
+                "dificuldade": "Difícil", 
+                "detalhes": "Venda obrigatória se receber proposta 15% acima do valor de mercado. Foco em valorização.",
+                "categoria": "Contratação"
+            },
+            { 
+                "nome": "Sem Orçamento", 
+                "dificuldade": "Extremo", 
+                "detalhes": "Orçamento de R$ 0, só trocas ou Agentes Livres. Vendas são seu único recurso.",
+                "categoria": "Contratação"
+            },
+            
+            // DESAFIOS DE GESTÃO
+            { 
+                "nome": "Under 21", 
+                "dificuldade": "Médio", 
+                "detalhes": "Venda obrigatória de jogador ao completar 22 anos. Time sempre jovem.",
+                "categoria": "Gestão"
+            },
+            { 
+                "nome": "Teto Salarial", 
+                "dificuldade": "Difícil", 
+                "detalhes": "Nenhum jogador pode ganhar mais de 40 mil/semana. Controle total de salários.",
+                "categoria": "Gestão"
+            },
+            { 
+                "nome": "O Retorno", 
+                "dificuldade": "Fácil", 
+                "detalhes": "Pelo menos 3 jogadores com mais de 34 anos no time titular. Experiência é fundamental.",
+                "categoria": "Gestão"
+            },
+            { 
+                "nome": "Estrela de Vidro", 
+                "dificuldade": "Médio", 
+                "detalhes": "Se lesionar por mais de 1 mês, deve vender o jogador. Evita jogadores frágeis.",
+                "categoria": "Gestão"
+            },
+            
+            // DESAFIOS DE ESTRATÉGIA
+            { 
+                "nome": "Clube de Vendas", 
+                "dificuldade": "Difícil", 
+                "detalhes": "Venda seu artilheiro todo final de temporada. Reinvenção constante do ataque.",
+                "categoria": "Estratégia"
+            },
+            { 
+                "nome": "Sem Renovação", 
+                "dificuldade": "Extremo", 
+                "detalhes": "Proibido renovar contratos. Todos saem de graça ao final do contrato.",
+                "categoria": "Estratégia"
+            },
+            { 
+                "nome": "Língua Pátria", 
+                "dificuldade": "Fácil", 
+                "detalhes": "Só jogadores que falem o idioma oficial do país. Integração imediata.",
+                "categoria": "Estratégia"
+            },
+            { 
+                "nome": "Brexit", 
+                "dificuldade": "Médio", 
+                "detalhes": "(Inglaterra) Proibido contratar jogadores estrangeiros. Apenas britânicos.",
+                "categoria": "Estratégia"
+            },
+            
+            // DESAFIOS DE RESTRIÇÃO
+            { 
+                "nome": "Limite de OVR", 
+                "dificuldade": "Difícil", 
+                "detalhes": "Nenhum jogador pode ter mais de 80 de overall. Equipe equilibrada e humilde.",
+                "categoria": "Restrição"
+            },
+            { 
+                "nome": "Escritório Frugal", 
+                "dificuldade": "Médio", 
+                "detalhes": "Apenas uma contratação por janela de transferência. Escolhas muito criteriosas.",
+                "categoria": "Restrição"
+            },
+            { 
+                "nome": "Troca de Comando", 
+                "dificuldade": "Fácil", 
+                "detalhes": "Mude de formação tática a cada 5 jogos. Time versátil e adaptável.",
+                "categoria": "Restrição"
+            },
+            { 
+                "nome": "Investidor Anjo", 
+                "dificuldade": "Médio", 
+                "detalhes": "Só jogadores que custem menos de 5 milhões. Foco em diamantes brutos.",
+                "categoria": "Restrição"
+            },
+            
+            // DESAFIOS DE IDENTIDADE
+            { 
+                "nome": "DNA do Clube", 
+                "dificuldade": "Fácil", 
+                "detalhes": "Metade do time titular deve ser de jogadores originais do clube. Identidade preservada.",
+                "categoria": "Identidade"
+            },
+            { 
+                "nome": "Sem Olheiros", 
+                "dificuldade": "Difícil", 
+                "detalhes": "Só contrate jogadores da 'Transfer List' do jogo. Sem scouting avançado.",
+                "categoria": "Identidade"
+            },
+            { 
+                "nome": "Reconstrução Total", 
+                "dificuldade": "Médio", 
+                "detalhes": "Coloque todos acima de 28 anos à venda no primeiro dia. Juventude total.",
+                "categoria": "Identidade"
+            },
+            { 
+                "nome": "Aposta da Base", 
+                "dificuldade": "Fácil", 
+                "detalhes": "Pelo menos 2 jogadores da base em todos os jogos. Desenvolvimento de jovens.",
+                "categoria": "Identidade"
+            }
+        ];
+
+        // App state
+        let sorteios = 0;
+        let tempoInicio = Date.now();
+        let ultimoSorteio = null;
+        let sucessoRate = 100;
+
+        // DOM elements
+        const timeElement = document.getElementById("time");
+        const timeDetailsElement = document.getElementById("time-details");
+        const timeCategoryElement = document.getElementById("time-category");
+        const formacaoElement = document.getElementById("formacao");
+        const formacaoDetailsElement = document.getElementById("formacao-details");
+        const formacaoTypeElement = document.getElementById("formacao-type");
+        const desafioElement = document.getElementById("desafio");
+        const desafioDetailsElement = document.getElementById("desafio-details");
+        const desafioDifficultyElement = document.getElementById("desafio-difficulty");
+        const totalSorteiosElement = document.getElementById("total-sorteios");
+        const tempoJogoElement = document.getElementById("tempo-jogo");
+        const sucessoRateElement = document.getElementById("sucesso-rate");
+        const totalTimesElement = document.getElementById("total-times");
+        const databaseStatsElement = document.getElementById("database-stats");
+        const statusElement = document.getElementById("status");
+        const buttonTextElement = document.getElementById("button-text");
+        const sortearBtn = document.getElementById("sortear-btn");
+        const toastElement = document.getElementById("toast");
+
+        // Initialize
+        function init() {
+            updateDatabaseStats();
+            updateTempoJogo();
+            setInterval(updateTempoJogo, 1000);
+            
+            // Show welcome message
+            setTimeout(() => {
+                showToast("Bem-vindo ao EA FC 26 Career Simulator!", "Banco de dados carregado com sucesso!", "info");
+            }, 1000);
+        }
+
+        // Update database stats
+        function updateDatabaseStats() {
+            databaseStatsElement.textContent = `${times.length} times | ${formacoes.length} formações | ${desafios.length} desafios`;
+            totalTimesElement.textContent = `${times.length}+`;
+        }
+
+        // Update game time
+        function updateTempoJogo() {
+            const tempoDecorrido = Date.now() - tempoInicio;
+            const minutos = Math.floor(tempoDecorrido / 60000);
+            const segundos = Math.floor((tempoDecorrido % 60000) / 1000);
+            tempoJogoElement.textContent = `${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+        }
+
+        // Main draw function
+        function sortear() {
+            // Disable button and show loading
+            sortearBtn.disabled = true;
+            buttonTextElement.innerHTML = 'SORTEANDO<span class="loading-dots"></span>';
+            statusElement.textContent = "SORTEANDO";
+            statusElement.className = "text-primary font-semibold animate-pulse";
+            
+            // Reset opacity for all elements
+            [timeDetailsElement, formacaoDetailsElement, desafioDetailsElement].forEach(el => {
+                el.style.opacity = "0";
+            });
+            [timeCategoryElement, formacaoTypeElement, desafioDifficultyElement].forEach(el => {
+                el.style.opacity = "0";
+            });
+            
+            // Clear current values with animation
+            timeElement.innerHTML = '<span class="text-text-secondary animate-pulse">---</span>';
+            formacaoElement.innerHTML = '<span class="text-text-secondary animate-pulse">---</span>';
+            desafioElement.innerHTML = '<span class="text-text-secondary animate-pulse">---</span>';
+            
+            // Simulate loading delay
+            setTimeout(() => {
+                // Random selections
+                const randomTime = times[Math.floor(Math.random() * times.length)];
+                const randomFormacao = formacoes[Math.floor(Math.random() * formacoes.length)];
+                const randomDesafio = desafios[Math.floor(Math.random() * desafios.length)];
+                
+                // Update time info
+                timeElement.textContent = randomTime.nome;
+                timeDetailsElement.textContent = randomTime.detalhes;
+                timeCategoryElement.textContent = randomTime.categoria;
+                timeCategoryElement.className = getCategoryClass(randomTime.categoria);
+                
+                // Update formação info
+                formacaoElement.textContent = randomFormacao.nome;
+                formacaoDetailsElement.textContent = randomFormacao.detalhes;
+                formacaoTypeElement.textContent = randomFormacao.tipo;
+                formacaoTypeElement.className = getFormacaoTypeClass(randomFormacao.tipo);
+                
+                // Update desafio info
+                desafioElement.textContent = randomDesafio.nome;
+                desafioDetailsElement.textContent = randomDesafio.detalhes;
+                desafioDifficultyElement.textContent = randomDesafio.dificuldade;
+                desafioDifficultyElement.className = getDifficultyClass(randomDesafio.dificuldade);
+                
+                // Fade in details
+                setTimeout(() => {
+                    [timeDetailsElement, formacaoDetailsElement, desafioDetailsElement].forEach(el => {
+                        el.style.opacity = "1";
+                        el.style.transition = "opacity 0.5s ease";
+                    });
+                    [timeCategoryElement, formacaoTypeElement, desafioDifficultyElement].forEach(el => {
+                        el.style.opacity = "1";
+                        el.style.transition = "opacity 0.5s ease";
+                    });
+                }, 100);
+                
+                // Update stats
+                sorteios++;
+                totalSorteiosElement.textContent = sorteios;
+                
+                // Calculate success rate (simulated)
+                sucessoRate = Math.max(80, 100 - Math.floor(Math.random() * 20));
+                sucessoRateElement.textContent = `${sucessoRate}%`;
+                
+                // Store last draw
+                ultimoSorteio = {
+                    time: randomTime,
+                    formacao: randomFormacao,
+                    desafio: randomDesafio,
+                    timestamp: new Date().toLocaleString()
+                };
+                
+                // Re-enable button
+                setTimeout(() => {
+                    sortearBtn.disabled = false;
+                    buttonTextElement.textContent = "SORTEAR CARREIRA";
+                    statusElement.textContent = "PRONTO";
+                    statusElement.className = "text-primary font-semibold";
+                    
+                    // Show success toast
+                    showToast("Carreira sorteada!", `Você vai comandar o ${randomTime.nome}`, "success");
+                }, 500);
+                
+            }, 1500); // Loading delay
+        }
+
+        // Get category CSS class
+        function getCategoryClass(categoria) {
+            const classes = {
+                "Gigante em Crise": "difficulty-badge difficulty-medium",
+                "Médio Porte": "difficulty-badge difficulty-easy",
+                "Road to Glory": "difficulty-badge difficulty-hard",
+                "Resto do Mundo": "difficulty-badge difficulty-medium",
+                "Desafio Extremo": "difficulty-badge difficulty-extreme"
+            };
+            return classes[categoria] || "difficulty-badge difficulty-medium";
+        }
+
+        // Get formação type CSS class
+        function getFormacaoTypeClass(tipo) {
+            const classes = {
+                "Defensiva": "difficulty-badge difficulty-easy",
+                "Ofensiva": "difficulty-badge difficulty-hard",
+                "Tática": "difficulty-badge difficulty-medium",
+                "Tradicional": "difficulty-badge difficulty-easy",
+                "Equilibrada": "difficulty-badge difficulty-medium"
+            };
+            return classes[tipo] || "difficulty-badge difficulty-medium";
+        }
+
+        // Get difficulty CSS class
+        function getDifficultyClass(dificuldade) {
+            const classes = {
+                "Fácil": "difficulty-badge difficulty-easy",
+                "Médio": "difficulty-badge difficulty-medium",
+                "Difícil": "difficulty-badge difficulty-hard",
+                "Extremo": "difficulty-badge difficulty-extreme"
+            };
+            return classes[dificuldade] || "difficulty-badge difficulty-medium";
+        }
+
+        // Reset function
+        function resetar() {
+            sorteios = 0;
+            tempoInicio = Date.now();
+            sucessoRate = 100;
+            ultimoSorteio = null;
+            
+            totalSorteiosElement.textContent = "0";
+            sucessoRateElement.textContent = "100%";
+            
+            timeElement.innerHTML = '<span class="text-text-secondary">---</span>';
+            formacaoElement.innerHTML = '<span class="text-text-secondary">---</span>';
+            desafioElement.innerHTML = '<span class="text-text-secondary">---</span>';
+            
+            timeDetailsElement.textContent = "Selecione um time para ver detalhes";
+            formacaoDetailsElement.textContent = "Formação tática do seu time";
+            desafioDetailsElement.textContent = "Seu objetivo principal na carreira";
+            
+            [timeDetailsElement, formacaoDetailsElement, desafioDetailsElement].forEach(el => {
+                el.style.opacity = "0";
+            });
+            
+            [timeCategoryElement, formacaoTypeElement, desafioDifficultyElement].forEach(el => {
+                el.style.opacity = "0";
+            });
+            
+            showToast("Resetado!", "Todas as estatísticas foram reiniciadas.", "info");
+        }
+
+        // Copy result function
+        function copiarResultado() {
+            if (!ultimoSorteio) {
+                showToast("Erro!", "Nenhum sorteio realizado ainda.", "error");
+                return;
+            }
+            
+            const texto = `EA FC 26 Career Simulator - Carreira Sorteada:
+            
+🏆 TIME: ${ultimoSorteio.time.nome}
+📊 CATEGORIA: ${ultimoSorteio.time.categoria}
+📍 DETALHES: ${ultimoSorteio.time.detalhes}
+
+⚽ FORMAÇÃO: ${ultimoSorteio.formacao.nome}
+🎯 TIPO: ${ultimoSorteio.formacao.tipo}
+📈 DETALHES: ${ultimoSorteio.formacao.detalhes}
+
+🏅 DESAFIO: ${ultimoSorteio.desafio.nome}
+⭐ DIFICULDADE: ${ultimoSorteio.desafio.dificuldade}
+🎮 DETALHES: ${ultimoSorteio.desafio.detalhes}
+
+📅 Sorteado em: ${ultimoSorteio.timestamp}
+🔄 Total de sorteios: ${sorteios}`;
+            
+            navigator.clipboard.writeText(texto).then(() => {
+                showToast("Copiado!", "Resultado copiado para a área de transferência.", "success");
+            }).catch(err => {
+                showToast("Erro!", "Não foi possível copiar o resultado.", "error");
+            });
+        }
+
+        // Share function
+        function compartilhar() {
+            if (!ultimoSorteio) {
+                showToast("Erro!", "Nenhum sorteio realizado ainda.", "error");
+                return;
+            }
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: "EA FC 26 Career Simulator - Minha Carreira",
+                    text: `Acabei de sortear minha carreira no EA FC 26! Vou comandar o ${ultimoSorteio.time.nome} com a formação ${ultimoSorteio.formacao.nome} e o desafio ${ultimoSorteio.desafio.nome}.`,
+                    url: window.location.href
+                }).then(() => {
+                    showToast("Compartilhado!", "Carreira compartilhada com sucesso!", "success");
+                }).catch(err => {
+                    showToast("Cancelado", "Compartilhamento cancelado.", "info");
+                });
+            } else {
+                copiarResultado();
+            }
+        }
+
+        // Show database modal
+        function mostrarDatabase() {
+            document.getElementById("database-modal").classList.remove("hidden");
+        }
+
+        // Close modal
+        function fecharModal() {
+            document.getElementById("database-modal").classList.add("hidden");
+        }
+
+        // Toast notification
+        function showToast(title, message, type) {
+            const icon = document.getElementById("toast-icon");
+            const toastTitle = document.getElementById("toast-title");
+            const toastMessage = document.getElementById("toast-message");
+            
+            // Set icon based on type
+            switch(type) {
+                case "success":
+                    icon.className = "fas fa-check-circle text-primary text-xl mr-3";
+                    break;
+                case "error":
+                    icon.className = "fas fa-times-circle text-red-500 text-xl mr-3";
+                    break;
+                case "info":
+                    icon.className = "fas fa-info-circle text-blue-500 text-xl mr-3";
+                    break;
+                default:
+                    icon.className = "fas fa-info-circle text-primary text-xl mr-3";
+            }
+            
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            
+            // Show toast
+            toastElement.classList.remove("translate-x-full");
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                toastElement.classList.add("translate-x-full");
+            }, 3000);
+        }
+
+        // Initialize on load
+        document.addEventListener("DOMContentLoaded", init);
+    </script>
+</body>
+</html>
