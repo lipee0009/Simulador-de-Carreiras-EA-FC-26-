@@ -1,0 +1,1 @@
+# Simulador-de-Carreiras-EA-FC-26-
